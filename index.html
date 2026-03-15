@@ -6,26 +6,43 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 40px;
             background-color: #f7f7f7;
-        }
-        h1 {
+            margin: 40px;
             color: #333;
         }
-        a {
-            display: block;
-            padding: 8px 0;
-            color: #1a73e8;
-            text-decoration: none;
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
         }
-        a:hover {
-            text-decoration: underline;
+        p {
+            margin-bottom: 20px;
+        }
+        a.button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #1a73e8;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        a.button:hover {
+            background-color: #1669c1;
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <h1>Welcome to My iPhone File Repository</h1>
-    <p>Click below to browse all files:</p>
-    <a href="SharedRepo/" target="_blank">Go to Shared Repository</a>
+    <p>Click the button below to browse all files stored on this iPhone server.</p>
+    <a href="./" class="button" target="_blank">Browse Repository</a>
+    
+    <footer>
+        <p>Files are served directly from the iPhone. Add new files via your file-sharing app.</p>
+    </footer>
 </body>
 </html>
