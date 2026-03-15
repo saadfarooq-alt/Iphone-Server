@@ -1,18 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>iPhone File Repo</title>
+    <meta charset="UTF-8">
+    <title>iPhone File Repository</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f7f7f7;
+        }
+        h1 {
+            color: #333;
+        }
+        a {
+            display: block;
+            padding: 8px 0;
+            color: #1a73e8;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <h1>My iPhone File Repository</h1>
-    <ul>
-        <li><a href="document1.pdf">document1.pdf</a></li>
-        <li><a href="image1.png">image1.png</a></li>
-    </ul>
-    <h2>Upload a new file</h2>
-    <form action="upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="Upload">
-    </form>
+    <h1>Welcome to My iPhone File Repository</h1>
+    <p>Click below to browse all files:</p>
+    <a href="SharedRepo/" target="_blank">Go to Shared Repository</a>
 </body>
 </html>
