@@ -1,48 +1,587 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>iPhone File Repository</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
-            margin: 40px;
-            color: #333;
-        }
-        h1 {
-            font-size: 2em;
-            margin-bottom: 20px;
-        }
-        p {
-            margin-bottom: 20px;
-        }
-        a.button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #1a73e8;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        a.button:hover {
-            background-color: #1669c1;
-        }
-        footer {
-            margin-top: 40px;
-            font-size: 0.9em;
-            color: #666;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudDrop · File Repository</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #7c3aed;
+    --accent2: #a78bfa;
+    --accent-glow: rgba(124,58,237,0.25);
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warn: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 80% 10%, rgba(124,58,237,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 10% 80%, rgba(167,139,250,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* Header */
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 48px; }
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; letter-spacing: -0.02em;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; box-shadow: 0 0 20px var(--accent-glow);
+  }
+  .header-stats { display: flex; gap: 20px; }
+  .stat {
+    text-align: right;
+    font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--muted);
+  }
+  .stat strong { display: block; color: var(--accent2); font-size: 0.85rem; }
+
+  /* Setup Banner */
+  #setup-banner {
+    background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(167,139,250,0.08));
+    border: 1px solid var(--accent);
+    border-radius: 14px; padding: 20px 24px; margin-bottom: 32px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  #setup-banner .icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 2px; }
+  #setup-banner h3 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; color: var(--accent2); }
+  #setup-banner p { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+  #setup-banner a { color: var(--accent2); }
+  .key-input-row { display: flex; gap: 8px; margin-top: 12px; }
+  .key-input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 14px; color: var(--text);
+    font-family: 'Space Mono', monospace; font-size: 0.78rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .key-input:focus { border-color: var(--accent); }
+  .btn {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 9px 18px; font-family: 'Syne', sans-serif; font-weight: 600;
+    font-size: 0.82rem; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .btn:hover { background: #6d28d9; box-shadow: 0 0 16px var(--accent-glow); }
+  .btn:active { transform: scale(0.97); }
+  .btn.secondary {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+  }
+  .btn.secondary:hover { border-color: var(--accent2); color: var(--accent2); background: transparent; box-shadow: none; }
+  .btn.danger { background: var(--danger); }
+  .btn.danger:hover { background: #dc2626; box-shadow: 0 0 16px rgba(239,68,68,0.3); }
+  .btn.sm { padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; }
+
+  /* Drop Zone */
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: 16px;
+    padding: 48px 24px; text-align: center; margin-bottom: 32px;
+    cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden;
+    background: var(--surface);
+  }
+  .drop-zone::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--accent-glow), transparent);
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent); }
+  .drop-zone:hover::before, .drop-zone.dragover::before { opacity: 1; }
+  .drop-zone.dragover { transform: scale(1.01); }
+  .drop-icon { font-size: 2.5rem; margin-bottom: 12px; display: block; }
+  .drop-zone h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
+  .drop-zone p { color: var(--muted); font-size: 0.85rem; }
+  .drop-zone input[type="file"] { display: none; }
+  .upload-progress {
+    display: none; margin-top: 16px; background: var(--surface2);
+    border-radius: 8px; height: 6px; overflow: hidden;
+  }
+  .upload-progress-bar {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    width: 0%; transition: width 0.3s; border-radius: 8px;
+  }
+  .upload-status { margin-top: 10px; font-size: 0.8rem; color: var(--accent2); font-family: 'Space Mono', monospace; }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; gap: 12px; flex-wrap: wrap;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 200px; }
+  .search-box {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 14px 9px 36px; color: var(--text);
+    font-family: 'Syne', sans-serif; font-size: 0.85rem;
+    outline: none; transition: border-color 0.2s; position: relative;
+  }
+  .search-wrapper { position: relative; flex: 1; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+  .search-box:focus { border-color: var(--accent); }
+  .filter-tabs { display: flex; gap: 4px; }
+  .tab {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 6px; padding: 6px 12px; font-family: 'Syne', sans-serif;
+    font-size: 0.75rem; cursor: pointer; transition: all 0.15s;
+  }
+  .tab.active, .tab:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(167,139,250,0.08); }
+
+  /* File Grid */
+  .files-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .files-count { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--muted); }
+  #file-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .file-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px; cursor: pointer; transition: all 0.2s; position: relative;
+    animation: cardIn 0.3s ease forwards; opacity: 0;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .file-card:hover { border-color: var(--accent); background: var(--surface2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .file-thumb {
+    width: 100%; aspect-ratio: 1.6; border-radius: 8px; background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; margin-bottom: 12px; overflow: hidden; position: relative;
+  }
+  .file-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+  .file-type-badge {
+    position: absolute; bottom: 6px; right: 6px;
+    background: rgba(10,10,15,0.8); border-radius: 4px; padding: 2px 6px;
+    font-family: 'Space Mono', monospace; font-size: 0.6rem; color: var(--accent2);
+    text-transform: uppercase;
+  }
+  .file-name {
+    font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px;
+  }
+  .file-meta { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--muted); }
+  .file-actions {
+    display: flex; gap: 6px; margin-top: 10px;
+  }
+  .file-actions .btn { flex: 1; text-align: center; }
+
+  /* Empty state */
+  .empty-state {
+    grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--muted);
+  }
+  .empty-state .big-icon { font-size: 3rem; margin-bottom: 16px; display: block; opacity: 0.4; }
+  .empty-state h3 { font-size: 1rem; margin-bottom: 6px; }
+  .empty-state p { font-size: 0.82rem; }
+
+  /* Toast */
+  #toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 18px; font-size: 0.82rem; display: flex; align-items: center; gap: 10px;
+    animation: toastIn 0.3s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    max-width: 300px;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+  .toast.success { border-color: var(--success); }
+  .toast.error { border-color: var(--danger); }
+  .toast.warn { border-color: var(--warn); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 100; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 28px; max-width: 440px; width: 90%; animation: cardIn 0.2s ease;
+  }
+  .modal h3 { font-size: 1.1rem; margin-bottom: 8px; }
+  .modal p { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .copy-link-box {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .copy-link-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px; color: var(--accent2);
+    font-family: 'Space Mono', monospace; font-size: 0.72rem; outline: none;
+  }
+
+  @media (max-width: 600px) {
+    header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    #file-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  }
+</style>
 </head>
 <body>
-    <h1>Welcome to My iPhone File Repository</h1>
-    <p>Click the button below to browse all files stored on this iPhone server.</p>
-    <a href="./" class="button" target="_blank">Browse Repository</a>
-    
-    <footer>
-        <p>Files are served directly from the iPhone. Add new files via your file-sharing app.</p>
-    </footer>
+
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">☁️</div>
+      CloudDrop
+    </div>
+    <div class="header-stats">
+      <div class="stat"><strong id="stat-files">0</strong>files</div>
+      <div class="stat"><strong id="stat-size">0 KB</strong>total</div>
+    </div>
+  </header>
+
+  <!-- Setup Banner -->
+  <div id="setup-banner">
+    <div class="icon">🔑</div>
+    <div style="flex:1">
+      <h3>Connect your free Filestack account</h3>
+      <p>
+        Filestack gives you <strong>1GB free cloud storage</strong> — files are accessible from any device.<br>
+        <a href="https://www.filestack.com/sign-up/" target="_blank">Sign up free at filestack.com</a>, grab your API key, and paste it below.
+      </p>
+      <div class="key-input-row">
+        <input class="key-input" id="api-key-input" type="text" placeholder="Paste your Filestack API key here…" />
+        <button class="btn" onclick="saveApiKey()">Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drop Zone -->
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <span class="drop-icon">📂</span>
+    <h2>Drop files here or click to upload</h2>
+    <p>Any file type · Stored in your cloud · Download from anywhere</p>
+    <input type="file" id="file-input" multiple onchange="handleFileSelect(this.files)">
+    <div class="upload-progress" id="upload-progress">
+      <div class="upload-progress-bar" id="progress-bar"></div>
+    </div>
+    <div class="upload-status" id="upload-status"></div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input class="search-box" id="search-input" placeholder="Search files…" oninput="renderFiles()" />
+      </div>
+    </div>
+    <div class="filter-tabs" id="filter-tabs">
+      <button class="tab active" data-filter="all" onclick="setFilter('all',this)">All</button>
+      <button class="tab" data-filter="image" onclick="setFilter('image',this)">Images</button>
+      <button class="tab" data-filter="doc" onclick="setFilter('doc',this)">Docs</button>
+      <button class="tab" data-filter="video" onclick="setFilter('video',this)">Video</button>
+      <button class="tab" data-filter="other" onclick="setFilter('other',this)">Other</button>
+    </div>
+  </div>
+
+  <div class="files-header">
+    <span class="files-count" id="files-count">0 files</span>
+    <button class="btn secondary sm" onclick="clearAll()" style="display:none" id="clear-btn">🗑 Clear all</button>
+  </div>
+
+  <div id="file-grid"></div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal-overlay" id="share-modal">
+  <div class="modal">
+    <h3>📎 Share File</h3>
+    <p>Anyone with this link can download the file directly from the cloud.</p>
+    <div class="copy-link-box">
+      <input class="copy-link-input" id="share-link" readonly />
+      <button class="btn sm" onclick="copyShareLink()">Copy</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h3>🗑 Delete File</h3>
+    <p id="delete-modal-text">Are you sure you want to delete this file? This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'clouddrop_files';
+const API_KEY_STORAGE = 'clouddrop_api_key';
+let files = [];
+let currentFilter = 'all';
+let pendingDelete = null;
+
+// ── Init ───────────────────────────────────────────────────────────────
+function init() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) files = JSON.parse(saved);
+  const key = localStorage.getItem(API_KEY_STORAGE);
+  if (key) {
+    document.getElementById('api-key-input').value = key;
+    document.getElementById('setup-banner').style.display = 'none';
+  }
+  renderFiles();
+  setupDragDrop();
+}
+
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) { toast('Please paste your API key first', 'warn'); return; }
+  localStorage.setItem(API_KEY_STORAGE, key);
+  document.getElementById('setup-banner').style.display = 'none';
+  toast('✅ API key saved! Ready to upload.', 'success');
+}
+
+function getApiKey() {
+  return localStorage.getItem(API_KEY_STORAGE);
+}
+
+function saveFiles() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(files));
+}
+
+// ── Drag & Drop ────────────────────────────────────────────────────────
+function setupDragDrop() {
+  const zone = document.getElementById('drop-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    handleFileSelect(e.dataTransfer.files);
+  });
+}
+
+// ── Upload ─────────────────────────────────────────────────────────────
+async function handleFileSelect(fileList) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    document.getElementById('setup-banner').style.display = 'flex';
+    toast('⚠️ Please connect your Filestack account first', 'warn');
+    return;
+  }
+  const arr = Array.from(fileList);
+  if (!arr.length) return;
+  const progress = document.getElementById('upload-progress');
+  const bar = document.getElementById('progress-bar');
+  const status = document.getElementById('upload-status');
+  progress.style.display = 'block';
+  for (let i = 0; i < arr.length; i++) {
+    const file = arr[i];
+    status.textContent = `Uploading ${i + 1}/${arr.length}: ${file.name}`;
+    bar.style.width = `${((i) / arr.length) * 100}%`;
+    try {
+      const url = await uploadToFilestack(file, apiKey);
+      files.unshift({
+        id: Date.now() + '-' + Math.random().toString(36).slice(2),
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        url,
+        uploaded: new Date().toISOString()
+      });
+      saveFiles();
+    } catch (e) {
+      toast(`❌ Failed to upload ${file.name}: ${e.message}`, 'error');
+    }
+  }
+  bar.style.width = '100%';
+  status.textContent = `Done! ${arr.length} file(s) uploaded.`;
+  setTimeout(() => { progress.style.display = 'none'; bar.style.width = '0%'; status.textContent = ''; }, 2000);
+  renderFiles();
+  toast(`✅ ${arr.length} file(s) uploaded successfully`, 'success');
+}
+
+function uploadToFilestack(file, apiKey) {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData();
+    formData.append('fileUpload', file);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://www.filestackapi.com/api/store/S3?key=${apiKey}`);
+    xhr.onload = () => {
+      try {
+        const res = JSON.parse(xhr.responseText);
+        if (res.url) resolve(res.url);
+        else reject(new Error(res.message || 'Upload failed'));
+      } catch { reject(new Error('Invalid response from Filestack')); }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    xhr.send(formData);
+  });
+}
+
+// ── Render ─────────────────────────────────────────────────────────────
+function setFilter(f, el) {
+  currentFilter = f;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderFiles();
+}
+
+function getFileCategory(type, name) {
+  if (type.startsWith('image/')) return 'image';
+  if (type.startsWith('video/')) return 'video';
+  const ext = name.split('.').pop().toLowerCase();
+  const docExts = ['pdf','doc','docx','txt','xls','xlsx','ppt','pptx','csv','md','json'];
+  if (docExts.includes(ext) || type.includes('pdf') || type.includes('word') || type.includes('sheet')) return 'doc';
+  return 'other';
+}
+
+function getFileIcon(type, name) {
+  const cat = getFileCategory(type, name);
+  const icons = {
+    image: '🖼️', video: '🎬', doc: '📄', other: '📦'
+  };
+  const ext = name.split('.').pop().toLowerCase();
+  const extIcons = { pdf: '📕', mp3: '🎵', wav: '🎵', zip: '🗜️', rar: '🗜️', py: '🐍', js: '📜', html: '🌐', csv: '📊', xls: '📊', xlsx: '📊' };
+  return extIcons[ext] || icons[cat];
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderFiles() {
+  const query = document.getElementById('search-input').value.toLowerCase();
+  let filtered = files.filter(f => {
+    const matchSearch = f.name.toLowerCase().includes(query);
+    const matchFilter = currentFilter === 'all' || getFileCategory(f.type, f.name) === currentFilter;
+    return matchSearch && matchFilter;
+  });
+
+  const grid = document.getElementById('file-grid');
+  const count = document.getElementById('files-count');
+  const clearBtn = document.getElementById('clear-btn');
+
+  document.getElementById('stat-files').textContent = files.length;
+  const total = files.reduce((s, f) => s + (f.size || 0), 0);
+  document.getElementById('stat-size').textContent = formatSize(total);
+
+  count.textContent = `${filtered.length} file${filtered.length !== 1 ? 's' : ''}`;
+  clearBtn.style.display = files.length ? 'inline-block' : 'none';
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state">
+      <span class="big-icon">☁️</span>
+      <h3>${files.length ? 'No files match your search' : 'No files yet'}</h3>
+      <p>${files.length ? 'Try a different search or filter' : 'Upload your first file above to get started'}</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((f, i) => {
+    const cat = getFileCategory(f.type, f.name);
+    const icon = getFileIcon(f.type, f.name);
+    const ext = f.name.split('.').pop().toUpperCase();
+    const thumb = cat === 'image' ? `<img src="${f.url}" alt="${f.name}" loading="lazy" onerror="this.style.display='none'">` : `${icon}`;
+    return `<div class="file-card" style="animation-delay:${i * 0.04}s">
+      <div class="file-thumb">
+        ${thumb}
+        <span class="file-type-badge">${ext}</span>
+      </div>
+      <div class="file-name" title="${f.name}">${f.name}</div>
+      <div class="file-meta">${formatSize(f.size)} · ${formatDate(f.uploaded)}</div>
+      <div class="file-actions">
+        <a href="${f.url}" download="${f.name}" target="_blank" class="btn sm" onclick="event.stopPropagation()" title="Download">⬇️</a>
+        <button class="btn secondary sm" onclick="event.stopPropagation(); shareFile('${f.url}')" title="Share">🔗</button>
+        <button class="btn danger sm" onclick="event.stopPropagation(); deleteFile('${f.id}','${f.name.replace(/'/g,"\\'")}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Share ──────────────────────────────────────────────────────────────
+function shareFile(url) {
+  document.getElementById('share-link').value = url;
+  document.getElementById('share-modal').classList.add('open');
+}
+function copyShareLink() {
+  const input = document.getElementById('share-link');
+  navigator.clipboard.writeText(input.value).then(() => toast('📋 Link copied!', 'success'));
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────
+function deleteFile(id, name) {
+  pendingDelete = id;
+  document.getElementById('delete-modal-text').textContent = `Delete "${name}"? This removes it from your list (the cloud file may persist until your Filestack plan expires).`;
+  document.getElementById('delete-modal').classList.add('open');
+}
+function confirmDelete() {
+  files = files.filter(f => f.id !== pendingDelete);
+  saveFiles();
+  renderFiles();
+  closeModal();
+  toast('🗑 File removed', 'success');
+}
+function clearAll() {
+  if (!confirm('Remove all files from your list?')) return;
+  files = [];
+  saveFiles();
+  renderFiles();
+  toast('All files cleared', 'success');
+}
+function closeModal() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const icons = { success: '✅', error: '❌', warn: '⚠️' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) closeModal(); });
+});
+
+init();
+</script>
 </body>
 </html>
